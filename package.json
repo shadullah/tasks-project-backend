@@ -1,0 +1,29 @@
+{
+  "name": "naria-todo-backend",
+  "version": "1.0.0",
+  "description": "A task management backend system",
+  "keywords": [
+    "task",
+    "management"
+  ],
+  "license": "ISC",
+  "author": "Shadullah Sakib",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev":"nodemon -r dotenv/config --experimental-json-modules src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.10.1",
+    "nodemon": "^3.1.9",
+    "uuid": "^11.0.5"
+  }
+}

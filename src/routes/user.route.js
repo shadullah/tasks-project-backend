@@ -8,6 +8,7 @@ import {
   userUpdate,
   getToken,
   forgotPassword,
+  resetPassword,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -22,6 +23,7 @@ router.route("/:id").get(singleUser);
 router.route("/:id").patch(userUpdate);
 
 router.route("/forgot-password").post(forgotPassword);
+router.route("/reset-password").post(resetPassword);
 
 router.route("/:id/verify/:token").get(getToken);
 

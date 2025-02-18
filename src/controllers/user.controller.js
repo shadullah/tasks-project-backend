@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const generateAccessTokenAndRefreshTokens = async (userId) => {
   try {
@@ -214,7 +215,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    throw new ApiError(400, "Email missing");
+    throw new ApiError(400, "Email not given to send the link");
   }
 
   const emailExists = await User.findOne({ email });
@@ -234,7 +235,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }).save();
   console.log(newToken);
 
-  const url = `${process.env.BASE_URL}reset-password/verify/${newToken.token}`;
+  const url = `${process.env.BASE_URL}forgot-password/${emailExists._id}/${newToken.token}`;
 
   await sendEmail(
     email,
@@ -255,7 +256,49 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 const resetPassword = asyncHandler(async (req, res) => {
   try {
-    console.log("reset password");
+    const { token, userId, password } = req.body;
+
+    if (!token || !userId || !password) {
+      throw new ApiError(
+        400,
+        "please provide all the info - token, id, password"
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "No user found with this id");
+    }
+
+    const resetToken = await Token.findOne({ userId: user._id });
+    if (!resetToken) {
+      throw new ApiError(400, "Invalid or expired reset token");
+    }
+
+    const isValidToken = await bcrypt.compare(token, resetToken.token);
+    if (isValidToken) {
+      throw new ApiError(400, "Token not valid");
+    }
+
+    const newPassword = await bcrypt.hash(password, 10);
+
+    if (newPassword) {
+      user.password = newPassword;
+    }
+
+    await user.save();
+
+    await Token.deleteMany({ userId: user._id });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          {},
+          "password reset succussfully..!! Please login now."
+        )
+      );
   } catch (error) {
     console.log("error changing password: ", error);
     return Response.json({

@@ -235,7 +235,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }).save();
   console.log(newToken);
 
-  const url = `${process.env.BASE_URL}forgot-password/${emailExists._id}/${newToken.token}`;
+  const url = `${process.env.BASE_URL}forgot-password/${emailExists._id}/${resetToken}`;
 
   await sendEmail(
     email,
@@ -271,20 +271,19 @@ const resetPassword = asyncHandler(async (req, res) => {
     }
 
     const resetToken = await Token.findOne({ userId: user._id });
+    console.log(resetToken);
     if (!resetToken) {
       throw new ApiError(400, "Invalid or expired reset token");
     }
 
     const isValidToken = await bcrypt.compare(token, resetToken.token);
-    if (isValidToken) {
+    if (!isValidToken) {
       throw new ApiError(400, "Token not valid");
     }
 
-    const newPassword = await bcrypt.hash(password, 10);
+    user.password = password;
 
-    if (newPassword) {
-      user.password = newPassword;
-    }
+    console.log("this is new password", password);
 
     await user.save();
 

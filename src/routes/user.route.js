@@ -7,6 +7,7 @@ import {
   singleUser,
   userUpdate,
   getToken,
+  forgotPassword,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -19,6 +20,8 @@ router.route("/logout").post(logoutUser);
 router.route("").get(getAllUsers);
 router.route("/:id").get(singleUser);
 router.route("/:id").patch(userUpdate);
+
+router.route("/forgot-password").post(forgotPassword);
 
 router.route("/:id/verify/:token").get(getToken);
 

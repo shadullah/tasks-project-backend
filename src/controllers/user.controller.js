@@ -3,6 +3,9 @@ import { Token } from "../models/token.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import crypto from "crypto";
+import { sendEmail } from "../utils/sendEmail.js";
+import bcrypt from "bcrypt";
 
 const generateAccessTokenAndRefreshTokens = async (userId) => {
   try {
@@ -207,6 +210,61 @@ const getToken = asyncHandler(async (req, res) => {
   return res.status(200).send({ message: "email verified" });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email missing");
+  }
+
+  const emailExists = await User.findOne({ email });
+  console.log(emailExists._id);
+  if (!emailExists) {
+    throw new ApiError(404, "User with this email doesnot exists");
+  }
+
+  await Token.deleteMany({ userId: emailExists._id });
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = await bcrypt.hash(resetToken, 10);
+
+  const newToken = await new Token({
+    userId: emailExists._id,
+    token: hashedToken,
+  }).save();
+  console.log(newToken);
+
+  const url = `${process.env.BASE_URL}reset-password/verify/${newToken.token}`;
+
+  await sendEmail(
+    email,
+    "Reset password | Task manager",
+    `This is your reset password link. Click the link to reset the password- ${url}`
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "reset password link sent to your email successfully"
+      )
+    );
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  try {
+    console.log("reset password");
+  } catch (error) {
+    console.log("error changing password: ", error);
+    return Response.json({
+      success: false,
+      message: "Password couldn't be changed | something went wrong",
+    });
+  }
+});
+
 export {
   registerUser,
   loginUser,
@@ -215,4 +273,6 @@ export {
   singleUser,
   userUpdate,
   getToken,
+  forgotPassword,
+  resetPassword,
 };
